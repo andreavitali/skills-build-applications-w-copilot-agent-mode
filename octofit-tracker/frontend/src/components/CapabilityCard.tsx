@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getJson } from '../api/client.js';
 
 type Props<T> = {
@@ -14,6 +14,8 @@ export function CapabilityCard<T>({ title, description, endpoint, emptyText, get
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const getItemsRef = useRef(getItems);
+  getItemsRef.current = getItems;
 
   useEffect(() => {
     let active = true;
@@ -21,7 +23,7 @@ export function CapabilityCard<T>({ title, description, endpoint, emptyText, get
       try {
         const payload = await getJson<unknown>(endpoint);
         if (!active) return;
-        setItems(getItems(payload));
+        setItems(getItemsRef.current(payload));
         setError(null);
       } catch (err) {
         if (!active) return;
@@ -39,7 +41,7 @@ export function CapabilityCard<T>({ title, description, endpoint, emptyText, get
     return () => {
       active = false;
     };
-  }, [endpoint, getItems]);
+  }, [endpoint]);
 
   if (loading) {
     return <section className="card h-100"><div className="card-body"><h2 className="h4">{title}</h2><p>{description}</p><p role="status">Loading...</p></div></section>;

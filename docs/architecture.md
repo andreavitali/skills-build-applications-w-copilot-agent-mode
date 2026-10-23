@@ -30,20 +30,20 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 
 Record your plan here before editing code.
 
-- Presentation tier decision:
-- Logic tier decision:
-- Data tier decision:
-- Activity tracking approach:
-- Team management approach:
-- Leaderboard approach:
-- Workout suggestions approach:
+- Presentation tier decision: Keep the UI in React/Vite pages and components focused on rendering, route state, and API consumption; use fetch wrappers that call relative `/api` endpoints and surface loading, empty, and error states via accessible roles and text.
+- Logic tier decision: Keep the Express API as the business-logic boundary. Route handlers should validate request data, call service or model logic, and return deliberate `4xx` responses instead of leaking Mongo cast errors as `500`s.
+- Data tier decision: Define Mongo/Mongoose schemas for users, teams, activities, and workouts in the backend models, and keep seed data idempotent so repeated runs preserve seeded fixtures without duplicating unrelated records.
+- Activity tracking approach: Accept `userId`, `teamId`, `type`, and `minutes`; validate both IDs and existence, compute `points` and `occurredAt`, and persist the nested user/team references along with the submitted activity values.
+- Team management approach: Require a non-empty team name with `400`, default `members` to an empty array, and keep a team’s `name` and `mascot` values stable when returned from both create and list endpoints.
+- Leaderboard approach: Aggregate each team’s activity points, sort by total descending, and assign a 1-based rank so the API surfaces consistent ordering and totals for the UI.
+- Workout suggestions approach: Resolve a seeded user by email, analyze that user’s activity history or fitness goal, match the strongest activity pattern to a workout focus, and include a clear reason string in the first recommendation while returning a `4xx` for unknown emails.
 
 ## Test plan
 
 Record the commands you run and what each failure means.
 
-- Data-tier command: `npm run test:data --prefix octofit-tracker/backend`
-- API command: `npm run test:api --prefix octofit-tracker/backend`
-- Frontend command: `npm test --prefix octofit-tracker/frontend`
-- Backend build command: `npm run build --prefix octofit-tracker/backend`
-- Frontend build command: `npm run build --prefix octofit-tracker/frontend`
+- Data-tier command: `npm run test:data --prefix octofit-tracker/backend` — failures here indicate schema validation, required fields, or idempotent seed logic are not matching the data contract.
+- API command: `npm run test:api --prefix octofit-tracker/backend` — failures here indicate route validation, status codes, leaderboard aggregation, or workout suggestion logic are not honoring the API contract.
+- Frontend command: `npm test --prefix octofit-tracker/frontend` — failures here indicate React pages are not fetching the correct endpoints, rendering the expected content, or exposing accessible loading/empty/error states.
+- Backend build command: `npm run build --prefix octofit-tracker/backend` — failures here mean the TypeScript backend does not compile cleanly, usually due to typing, route signatures, or model/schema issues.
+- Frontend build command: `npm run build --prefix octofit-tracker/frontend` — failures here mean the Vite/React app has build-time errors or incorrect component contracts that block bundling.
